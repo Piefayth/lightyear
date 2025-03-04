@@ -7,11 +7,13 @@ use crate::{
 };
 use avian3d::{math::AsF32, prelude::*};
 use bevy::{color::palettes::css::MAGENTA, prelude::*};
-use lightyear::{client::prediction::rollback::DisableRollback, prelude::server::ReplicationTarget};
 use lightyear::{
     client::prediction::diagnostics::PredictionDiagnosticsPlugin,
     prelude::{client::*, *},
     transport::io::IoDiagnosticsPlugin,
+};
+use lightyear::{
+    client::prediction::rollback::DisableRollback, prelude::server::ReplicationTarget,
 };
 
 pub struct ExampleRendererPlugin;
@@ -25,15 +27,21 @@ impl Plugin for ExampleRendererPlugin {
                 add_character_cosmetics,
                 add_floor_cosmetics,
                 add_block_cosmetics,
-                add_projectile_cosmetics
             ),
+        );
+
+        app.add_systems(
+            PreUpdate,
+            (add_projectile_cosmetics)
+                .after(PredictionSet::Sync)
+                .before(PredictionSet::CheckRollback),
         );
 
         app.add_systems(
             PostUpdate,
             position_to_transform_for_interpolated.before(TransformSystem::TransformPropagate),
         );
-        
+
         // Set up visual interp plugins for Transform. Transform is updated in FixedUpdate
         // by the physics plugin so we make sure that in PostUpdate we interpolate it
         app.add_plugins(VisualInterpolationPlugin::<Transform>::default());
@@ -74,7 +82,6 @@ type PosToTransformComponents = (
     Option<&'static Parent>,
 );
 
-
 pub fn position_to_transform_for_interpolated(
     mut query: Query<PosToTransformComponents, With<Interpolated>>,
     parents: Query<ParentComponents, With<Children>>,
@@ -104,7 +111,6 @@ pub fn position_to_transform_for_interpolated(
         }
     }
 }
-
 
 /// Add the VisualInterpolateStatus::<Transform> component to non-floor entities with
 /// component `Position`. Floors don't need to be visually interpolated because we
@@ -142,7 +148,11 @@ fn add_character_cosmetics(
     character_query: Query<
         (Entity, &ColorComponent),
         (
-            Or<(Added<Predicted>, Added<ReplicationTarget>, Added<Interpolated>)>,
+            Or<(
+                Added<Predicted>,
+                Added<ReplicationTarget>,
+                Added<Interpolated>,
+            )>,
             With<CharacterMarker>,
         ),
     >,
@@ -176,11 +186,9 @@ fn add_projectile_cosmetics(
     for (entity) in &character_query {
         info!(?entity, "Adding cosmetics to character {:?}", entity);
         commands.entity(entity).insert((
-            Mesh3d(meshes.add(Sphere::new(
-                1.,
-            ))),
+            Mesh3d(meshes.add(Sphere::new(1.))),
             MeshMaterial3d(materials.add(Color::from(MAGENTA))),
-            RigidBody::Dynamic,  // needed to add this somewhere, lol
+            RigidBody::Dynamic, // needed to add this somewhere, lol
         ));
     }
 }
@@ -225,7 +233,6 @@ fn add_block_cosmetics(
         ));
     }
 }
-
 
 fn disable_projectile_rollback(
     mut commands: Commands,

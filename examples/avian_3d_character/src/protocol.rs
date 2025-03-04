@@ -97,10 +97,10 @@ impl Plugin for ProtocolPlugin {
             .add_prediction(ComponentSyncMode::Full);
 
         // app.register_component::<Transform>(ChannelDirection::ServerToClient)
-        //     .add_prediction(ComponentSyncMode::Full);
+        //     .add_prediction(ComponentSyncMode::Once);
 
-        app.register_component::<ComputedMass>(ChannelDirection::ServerToClient)
-            .add_prediction(ComponentSyncMode::Full);
+        // app.register_component::<ComputedMass>(ChannelDirection::ServerToClient)
+        //     .add_prediction(ComponentSyncMode::Full);
 
         // Position and Rotation have a `correction_fn` set, which is used to smear rollback errors
         // over a few frames, just for the rendering part in postudpate.
@@ -122,7 +122,6 @@ impl Plugin for ProtocolPlugin {
         // do not replicate Transform but make sure to register an interpolation function
         // for it so that we can do visual interpolation
         // (another option would be to replicate transform and not use Position/Rotation at all)
-        app.add_interpolation::<Transform>(ComponentSyncMode::None);
         app.add_interpolation_fn::<Transform>(TransformLinearInterpolation::lerp);
     }
 }

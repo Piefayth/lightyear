@@ -111,9 +111,9 @@ fn player_shoot(
                     ReplicateOnceComponent::<Rotation>::default(),
                     ReplicateOnceComponent::<LinearVelocity>::default(),
                     ReplicateOnceComponent::<AngularVelocity>::default(),
-                    ReplicateOnceComponent::<ComputedMass>::default(),
                     ReplicateOnceComponent::<ExternalForce>::default(),
                     ReplicateOnceComponent::<ExternalImpulse>::default(),
+                    ReplicateOnceComponent::<Transform>::default(),
                 ));
             }
 
