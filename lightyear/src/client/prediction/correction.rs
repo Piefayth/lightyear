@@ -102,9 +102,9 @@ pub(crate) fn get_corrected_state<C: SyncComponent>(
 /// i.e. if PreUpdate runs a few times in a row without any FixedUpdate step, the component stays in the CorrectedC state.
 /// Instead, right after the rollback, we need to reset the component to the original state
 pub(crate) fn set_original_prediction_post_rollback<C: SyncComponent>(
-    mut query: Query<(Entity, &mut C, &Correction<C>), Added<Correction<C>>>,
+    mut query: Query<(Entity, &mut C, &mut Correction<C>), Added<Correction<C>>>,
 ) {
-    for (entity, mut component, correction) in query.iter_mut() {
+    for (entity, mut component, mut correction) in query.iter_mut() {
         // correction has not started (even if a correction happens while a previous correction was going on, current_visual is None)
         if correction.current_visual.is_none() {
             trace!(component = ?std::any::type_name::<C>(), "reset value post-rollback, before first correction");
@@ -112,6 +112,7 @@ pub(crate) fn set_original_prediction_post_rollback<C: SyncComponent>(
             //  1. we only do the clone() once but if there's multiple frames before a FixedUpdate, we clone multiple times (mitigated by Added filter)
             //        although Added probably  doesn't work if we have nested Corrections..
             //  2. if there was a FixedUpdate right after the rollback, we wouldn't need to call this at all!
+            correction.current_correction = Some(component.clone()); // Preserve the predicted state of the component that was calculated in rollback
             *component.bypass_change_detection() = correction.original_prediction.clone();
         }
     }
